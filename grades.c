@@ -24,7 +24,6 @@ typedef struct {
 }course_t;
 
 
-
 /**
  * @brief User function, Destroys “student”.
  * @always succeed 
@@ -54,20 +53,18 @@ void course_destroy(void *course) {
  * @note Failes if "student" is invalid 
  */
 static list* grade_sheet_clone(list *source ,list *dest ){
+	/* varifing params legitimacy */
 	if ((source == NULL)||(dest==NULL)){
 		return NULL;
 	}
-
 	for(node *it = list_begin(source) ; it != NULL ; it=list_next(it)){
+		/* if push_back failed : error - free memory allocated so far */
 		if(!list_push_back(dest,list_get(it))){
 			list_destroy(dest);
 			return NULL;
-		}
-
-		
+		}	
 	}
 	return dest;
-
 }
 
 
@@ -77,29 +74,27 @@ static list* grade_sheet_clone(list *source ,list *dest ){
  * @note Failes if "course" is invalid 
  */
 int course_clone(void *course, void **clone){
+	/* varifing params legitimacy */
 	if ((course==NULL)||(clone==NULL)){
 		return 1;
 	}
+	/* casting to usable type */
 	course_t *course_temp=(course_t*)course;
 	course_t* new_course = (course_t*) malloc (sizeof(course_t));
 	if (new_course == NULL){
 		return 1;
 	}
-
 	new_course->name=(char*)malloc(strlen(course_temp->name)+1);
 	if(new_course->name==NULL){
+		/* error - free memory allocated so far */
 		course_destroy(new_course);
 		return 1;
 	}
 	strcpy(new_course->name,course_temp->name);
-
 	new_course->grade = course_temp->grade;
-
 	*clone=new_course;
-	
 	return 0;
 }
-
 
 
 /**
@@ -111,30 +106,32 @@ int student_clone(void *student, void **clone) {
 	if (student == NULL){
 		return 1;
 	}
+	/* casting to usable type */
 	student_t *student_temp=(student_t*)student;
 	student_t* new_student = (student_t*) malloc (sizeof(student_t));
 	if (new_student == NULL){
 		return 1;
 	}
-	
 	new_student->name=(char*)malloc(strlen(student_temp->name)+1);
 	if(new_student->name==NULL){
+		/* error - free memory allocated so far */
 		student_destroy(new_student);
 		return 1;
 	}
+
 	strcpy(new_student->name,student_temp->name);
-
 	new_student->id=student_temp->id;
-
+	/* initialize list for cloned student_t */
 	list* new_grade_sheet = list_init(course_clone,course_destroy);
 	if (new_grade_sheet == NULL){
+		/* error - free memory allocated so far */
 		student_destroy(new_student);
 		return 1;
 	}
-
 	new_student->grade_sheet=grade_sheet_clone(student_temp->grade_sheet,
 													new_grade_sheet);
 	if(new_student->grade_sheet==NULL){
+		/* error - free memory allocated so far */
 		list_destroy(new_grade_sheet);
 		student_destroy(new_student);
 		return 1;
@@ -142,9 +139,6 @@ int student_clone(void *student, void **clone) {
 	*clone=new_student;
 	return 0;
 }
-
-
-
 
 
 /**
@@ -157,6 +151,7 @@ static student_t* find_student(struct grades *grades,int id){
 		return NULL;
 	}
 	for(node *it=list_begin(grades->student_list);it!=NULL;it=list_next(it)){
+		/* fetching struct student_t */
 		student_t *student_temp=(student_t*)list_get(it);	
 		if(student_temp->id==id){
 			return student_temp;
@@ -176,13 +171,14 @@ static bool id_exists(struct grades *grades,int id){
 		exit(1);
 	}
 	for(node *it=list_begin(grades->student_list);it!=NULL;it=list_next(it)){
+		/* fetching struct student_t */
 		student_t *student_temp=(student_t*)list_get(it);	
 		if(student_temp->id==id){
 			return true;
 		}
 	}
+	/* if reached here - no such student in grades's student list */
 	return false;
-
 }
 
 
@@ -195,25 +191,22 @@ static bool course_exists(student_t *student,const char *course){
 	if(student==NULL){
 		exit(1);
 	}
-
 	list *temp_sheet= student->grade_sheet;
 	for(node *it=list_begin(temp_sheet) ; it!=NULL ; it=list_next(it)){
+		/* fetching struct course_t */
 		course_t *course_temp=(course_t*)list_get(it);
 		const char *temp_name = course_temp->name;
-		/////////complete according to answer on forum//////
 		if((temp_name==NULL)&&(course==NULL)){
+			/* two NULL names treated as same course */
 			return true;
 		}
 		if(!strcmp(temp_name,course)){
 			return true;
 		}
 	}
+	/* if reached here - no such course in students gradesheet */
 	return false;
 }
-
-
-
-
 
 
 /**
@@ -224,9 +217,11 @@ static void print_course(course_t* course){
 	if(course==NULL){
 		return ;
 	}
+	/* format option #1 */
 	if(course->name==NULL){
 		printf(" %d", course->grade);
 	}
+	/* format option #2 */
 	else {
 	printf(" %s %d", course->name, course->grade);
 	}
@@ -244,19 +239,16 @@ static void print_grade_sheet(list *grade_sheet){
 	}
 	
 	for(node *it=list_begin(grade_sheet)  ;it!=NULL;   it=list_next(it)){
+		/* fetching struct course_t */
 		course_t *course_temp=(course_t*)list_get(it);	
 		print_course(course_temp);
-		/* prevent an extra comma at the end of the line */
+		/* prevent an extra comma at end of line */
 		if(it != list_end(grade_sheet)){ 
 			printf(",");
 		}
 	}
 	return;
 }
-
-
-
-
 
 
 /**
@@ -275,24 +267,24 @@ static course_t* create_course(const char *name, int grade){
 	if (name!=NULL){
 		char *new_name= (char*)malloc(strlen(name)+1);
 		if (new_name==NULL){
+			/* error - free memory allocated so far */
 			free(new_course);
 			return NULL;
 		}
 		strcpy(new_name,name);
 		new_course->name=new_name;
 	}
+	/* NULL name is legal */
 	else if (name==NULL){
 		new_course->name = NULL;
 	}
-
 	return new_course;
 }
 
 
 /**
- * @brief initializing struct student with "name" and "id"
- * @returns pointer to student on success
- * @note Failes if "name" is invalid 
+ * @brief initializing struct student_t with "name" and "id"
+ * @returns pointer to student on success, NULL if allocations failed 
  */
 static student_t* create_student(const char *name, int id){
 
@@ -309,6 +301,7 @@ static student_t* create_student(const char *name, int id){
 	else if (name!=NULL){
 		char *new_name= (char*)malloc(strlen(name)+1);
 		if (new_name==NULL){
+			/* error - free memory allocated so far */
 			free(new_student);
 			return NULL;
 		}
@@ -317,7 +310,9 @@ static student_t* create_student(const char *name, int id){
 	}
 
 	new_student->grade_sheet=list_init(course_clone, course_destroy);
+	/* if list_init failed */
 	if(new_student->grade_sheet==NULL){
+		/* error - free memory allocated so far */
 		free(new_student->name);
 		free(new_student);
 		return NULL;
@@ -326,20 +321,17 @@ static student_t* create_student(const char *name, int id){
 }
 
 
-
 /**
  * @brief Initializes the "grades" data-structure.
  * @returns A pointer to the data-structure, of NULL in case of an error
  */
 struct grades* grades_init(){
-	
+
 	struct grades* new_grades = (struct grades*) malloc(sizeof(struct grades)); 
 	if (new_grades==NULL){
 		return NULL;
 	}
-
 	new_grades->student_list= list_init(student_clone, student_destroy);
-
 	return new_grades;
 }
 
@@ -348,14 +340,11 @@ struct grades* grades_init(){
  * @brief Destroys "grades", de-allocate all memory!
 */
 void grades_destroy(struct grades *grades){
-
 	if (grades == NULL){
 		return ;
 	}
-
 	list_destroy(grades->student_list);
 	free (grades);
-
 	return;
 }
 
@@ -367,7 +356,7 @@ void grades_destroy(struct grades *grades){
  * the same "id" already exists in "grades"
  */
 int grades_add_student(struct grades *grades, const char *name, int id){
-	/* name might be NULL*/
+	/* NULL name is legal */
 	if (grades==NULL || id_exists(grades,id) ){ 
 		return 1;
 	}
@@ -378,11 +367,10 @@ int grades_add_student(struct grades *grades, const char *name, int id){
 	}
 
 	list_push_back(grades->student_list, new_student);
+	/* was cloned - destroying original */
 	student_destroy(new_student);
 	return 0;
 }
-
-
 
 
 /**
@@ -394,11 +382,11 @@ int grades_add_student(struct grades *grades, const char *name, int id){
  */
 int grades_add_grade(struct grades *grades, const char *name,int id,
 					int grade){
-
+	/* varifing params legitimacy */
 	if ((grades==NULL) || (grade<0) || (grade>100) || (!id_exists(grades,id))){
 		return 1;
 	}
-	
+	/* fetching given student */
 	student_t *student_temp = find_student(grades, id);
 	if(course_exists(student_temp,name)){
 		return 1;
@@ -410,12 +398,11 @@ int grades_add_grade(struct grades *grades, const char *name,int id,
 	}
 
 	list_push_back(student_temp->grade_sheet, new_course);
+	/* was cloned - destroying original */
 	course_destroy(new_course);
 	return 0;
 
 }
-
-
 
 
 /**
@@ -430,40 +417,35 @@ int grades_add_grade(struct grades *grades, const char *name,int id,
  * @note On error, sets "out" to NULL.
  */
 float grades_calc_avg(struct grades *grades, int id, char **out){
-
+	/* varifing params legitimacy */
 	if ((grades == NULL)|| !id_exists(grades, id)){
 		return -1;
 	}
-
+	/* fetching given student */
 	student_t* temp_student = find_student(grades, id);
-
-
 	char *name_copy= (char*)malloc(strlen(temp_student->name)+1);
 	if (name_copy==NULL){
 		return -1;
 	}
 	strcpy(name_copy,temp_student->name);
 	*out=name_copy;
-	
-
+	/* if no courses */
 	if (list_begin(temp_student->grade_sheet) == NULL){
 		return 0;
 	}
 
 	unsigned int count = 0;
 	float tot = 0;
-
-	for(node *it=list_begin(temp_student->grade_sheet) ; it!=NULL ; it=list_next(it)){
+	/* temp_it declared here to shorten for statement line */
+	node *temp_it = list_begin(temp_student->grade_sheet);
+	for(node *it=temp_ptr ; it!=NULL ; it=list_next(it)){
 		course_t *temp_course=(course_t*)list_get(it);
 		tot = tot + temp_course->grade;
 		count++;
 	}
+	/* implicit casting to float */
 	return tot/count;
 }
-
-
-
-
 
 
 /**
@@ -476,16 +458,18 @@ float grades_calc_avg(struct grades *grades, int id, char **out){
  * in which they were inserted into "grades"
  */
 int grades_print_student(struct grades *grades, int id){
+	/* varifing params legitimacy */ 
 	if((grades==NULL)||(!id_exists(grades,id))){
 		return 1;
 	}
+	/* allocating */ 
 	student_t *student_temp= find_student( grades, id);
 	if (student_temp == NULL){
 		return 1;
 	}
 	printf("%s %d:", student_temp->name, student_temp->id);
 	print_grade_sheet(student_temp->grade_sheet);
-	printf ("\n"); //////////////////////////////////////////maybe \n\r
+	printf ("\n"); 
 	return 0;
 }
 
@@ -505,14 +489,12 @@ int grades_print_all(struct grades *grades){
 	if(grades==NULL){
 		return 1;
 	}
-
+	/*looping over students list using iterators */
 	for(node *it=list_begin(grades->student_list);it!=NULL; it=list_next(it)){
 		student_t* student_temp	= (student_t*)list_get(it);
-		/* if such student doesnt exist everything ok */
+		/* if such student doesnt exist - everything ok */
 		grades_print_student(grades,student_temp->id);
 		
 	}
 	return 0;
 }
-
-
