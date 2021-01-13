@@ -438,7 +438,7 @@ float grades_calc_avg(struct grades *grades, int id, char **out){
 	float tot = 0;
 	/* temp_it declared here to shorten for statement line */
 	node *temp_it = list_begin(temp_student->grade_sheet);
-	for(node *it=temp_ptr ; it!=NULL ; it=list_next(it)){
+	for(node *it=temp_it ; it!=NULL ; it=list_next(it)){
 		course_t *temp_course=(course_t*)list_get(it);
 		tot = tot + temp_course->grade;
 		count++;
